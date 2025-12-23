@@ -1,110 +1,183 @@
-# FHEVM Hardhat Template
+# VeilMarkets
 
-A Hardhat-based template for developing Fully Homomorphic Encryption (FHE) enabled Solidity smart contracts using the
-FHEVM protocol by Zama.
+VeilMarkets is an encrypted prediction market built on Zama FHEVM. Users create predictions with 2-4 options, submit
+encrypted choices, and keep option tallies private on-chain until decrypted through the FHEVM flow.
 
-## Quick Start
+## Overview
 
-For detailed instructions see:
-[FHEVM Hardhat Quick Start Tutorial](https://docs.zama.ai/protocol/solidity-guides/getting-started/quick-start-tutorial)
+VeilMarkets answers a common problem in open prediction markets: early votes and public tallies can influence later
+participants, enable coercion, and expose private opinions. This project keeps the signal private while retaining
+on-chain verifiability and auditability.
 
-### Prerequisites
+## Problems This Project Solves
 
-- **Node.js**: Version 20 or higher
-- **npm or yarn/pnpm**: Package manager
+- Protects voter privacy by keeping individual choices encrypted.
+- Reduces bandwagon and manipulation effects by encrypting tallies.
+- Preserves on-chain integrity by recording the encrypted counts and metadata on Ethereum.
+- Enables transparent audits once decryption is authorized.
 
-### Installation
+## Key Advantages
 
-1. **Install dependencies**
+- True on-chain privacy using Fully Homomorphic Encryption (FHE) rather than obfuscation or off-chain trust.
+- Encrypted tallies are updated in-contract, so results are computed on-chain without revealing raw votes.
+- Simple, auditable logic with clear constraints (2-4 options, one vote per address).
+- Designed for composability: other contracts can read encrypted state and build on top of it.
+
+## Core Capabilities
+
+- Create a prediction with a title and 2-4 options.
+- Submit an encrypted option choice, one per address.
+- Store encrypted counts per option directly on-chain.
+- Read encrypted tallies and metadata via view functions.
+- Decrypt tallies using the FHEVM workflow (CLI or relayer).
+
+## Privacy and Security Model
+
+- Each vote is encrypted off-chain and submitted as an encrypted handle plus proof.
+- The contract updates encrypted counts using FHE operations (no plaintext math).
+- Counts are marked as publicly decryptable and also allow the voter and creator for decryption workflows.
+- The contract never stores plaintext votes or option indexes.
+- View functions do not rely on msg.sender and are safe for external reads.
+
+## Technology Stack
+
+- Smart contracts: Solidity 0.8.27 with Zama FHEVM (`@fhevm/solidity`)
+- Contract framework: Hardhat + hardhat-deploy
+- Frontend: React + Vite
+- Wallet UX: Rainbow (RainbowKit)
+- Reads: viem
+- Writes: ethers
+- Package manager: npm
+- Styling: custom CSS (no Tailwind)
+
+## Repository Layout
+
+```
+VeilMarkets/
+├── contracts/                # Solidity contracts
+├── deploy/                   # Deployment scripts
+├── deployments/              # Network deployment artifacts + ABI
+├── tasks/                    # Hardhat tasks
+├── test/                     # Hardhat tests
+├── home/                     # React + Vite frontend
+├── docs/                     # Zama integration notes
+└── hardhat.config.ts         # Hardhat configuration
+```
+
+## Prerequisites
+
+- Node.js 20+
+- npm
+- A funded testnet account for Sepolia
+
+## Installation
+
+1. Install root dependencies:
 
    ```bash
    npm install
    ```
 
-2. **Set up environment variables**
+2. Install frontend dependencies:
 
    ```bash
-   npx hardhat vars set MNEMONIC
-
-   # Set your Infura API key for network access
-   npx hardhat vars set INFURA_API_KEY
-
-   # Optional: Set Etherscan API key for contract verification
-   npx hardhat vars set ETHERSCAN_API_KEY
+   cd home
+   npm install
    ```
 
-3. **Compile and test**
+## Environment Setup (Hardhat Only)
 
-   ```bash
-   npm run compile
-   npm run test
-   ```
+Create a `.env` file in the project root with:
 
-4. **Deploy to local network**
-
-   ```bash
-   # Start a local FHEVM-ready node
-   npx hardhat node
-   # Deploy to local network
-   npx hardhat deploy --network localhost
-   ```
-
-5. **Deploy to Sepolia Testnet**
-
-   ```bash
-   # Deploy to Sepolia
-   npx hardhat deploy --network sepolia
-   # Verify contract on Etherscan
-   npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
-   ```
-
-6. **Test on Sepolia Testnet**
-
-   ```bash
-   # Once deployed, you can run a simple test on Sepolia.
-   npx hardhat test --network sepolia
-   ```
-
-## 📁 Project Structure
-
-```
-fhevm-hardhat-template/
-├── contracts/           # Smart contract source files
-│   └── FHECounter.sol   # Example FHE counter contract
-├── deploy/              # Deployment scripts
-├── tasks/               # Hardhat custom tasks
-├── test/                # Test files
-├── hardhat.config.ts    # Hardhat configuration
-└── package.json         # Dependencies and scripts
+```bash
+PRIVATE_KEY=your_wallet_private_key
+INFURA_API_KEY=your_infura_key
+ETHERSCAN_API_KEY=your_etherscan_key # optional
 ```
 
-## 📜 Available Scripts
+Notes:
+- Deployment uses a private key (no mnemonic).
+- The frontend does not rely on environment variables.
 
-| Script             | Description              |
-| ------------------ | ------------------------ |
-| `npm run compile`  | Compile all contracts    |
-| `npm run test`     | Run all tests            |
-| `npm run coverage` | Generate coverage report |
-| `npm run lint`     | Run linting checks       |
-| `npm run clean`    | Clean build artifacts    |
+## Compile and Test
 
-## 📚 Documentation
+```bash
+npm run compile
+npm run test
+```
 
-- [FHEVM Documentation](https://docs.zama.ai/fhevm)
-- [FHEVM Hardhat Setup Guide](https://docs.zama.ai/protocol/solidity-guides/getting-started/setup)
-- [FHEVM Testing Guide](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat/write_test)
-- [FHEVM Hardhat Plugin](https://docs.zama.ai/protocol/solidity-guides/development-guide/hardhat)
+## Local Contract Development
 
-## 📄 License
+```bash
+npx hardhat node
+npx hardhat deploy --network localhost
+```
 
-This project is licensed under the BSD-3-Clause-Clear License. See the [LICENSE](LICENSE) file for details.
+These commands are useful for contract-only testing. The frontend is intended to operate on Sepolia.
 
-## 🆘 Support
+## Deploy to Sepolia
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/zama-ai/fhevm/issues)
-- **Documentation**: [FHEVM Docs](https://docs.zama.ai)
-- **Community**: [Zama Discord](https://discord.gg/zama)
+```bash
+npx hardhat deploy --network sepolia
+```
 
----
+If you want to verify:
 
-**Built with ❤️ by the Zama team**
+```bash
+npx hardhat verify --network sepolia <CONTRACT_ADDRESS>
+```
+
+## Run the Frontend
+
+```bash
+cd home
+npm run dev
+```
+
+Frontend notes:
+- The ABI must come from `deployments/sepolia` (generated by Hardhat).
+- Reads use viem; writes use ethers.
+- No localstorage and no environment variables are used by design.
+
+## Hardhat Tasks
+
+```bash
+npx hardhat --network <network> task:address
+npx hardhat --network <network> task:create-prediction --title "Will ETH > 4k?" --options "Yes,No,Maybe"
+npx hardhat --network <network> task:vote --id 0 --option 1
+npx hardhat --network <network> task:show --id 0
+```
+
+## How It Works (End-to-End)
+
+1. A creator submits a prediction with 2-4 options.
+2. A voter encrypts an option index locally using the FHEVM tooling.
+3. The encrypted handle and proof are submitted on-chain.
+4. The contract updates encrypted counts without decrypting votes.
+5. Authorized decryption flows reveal tallies when needed.
+
+## Current Constraints
+
+- Options limited to 2-4.
+- One vote per address per prediction.
+- No time-based closing or settlement logic yet.
+- Tallies are encrypted by default and require FHEVM decryption tooling to read.
+
+## Roadmap
+
+- Add prediction lifecycle (open, close, resolve).
+- Optional reveal policy (creator-controlled or time-based).
+- Reward and payout mechanisms for correct predictions.
+- More option formats and metadata fields.
+- UI analytics and historical market browsing.
+- Indexing support for faster reads at scale.
+
+## Documentation
+
+- Zama FHEVM contract guide: `docs/zama_llm.md`
+- Zama frontend relayer guide: `docs/zama_doc_relayer.md`
+- FHEVM docs: https://docs.zama.ai/fhevm
+
+## License
+
+BSD-3-Clause-Clear. See `LICENSE`.
